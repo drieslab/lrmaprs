@@ -5,16 +5,43 @@
 #' @useDynLib lrmaprs, .registration = TRUE
 NULL
 
-#' Internal: contact scores over all shifts. See the crate documentation.
+#' Contact-scale scores of lrmap over all toroidal shifts
+#' @description Internal kernel of lrmap (called by `lrmap(backend = "rust")`). For every shift of the sender layer it
+#'   finds each receiver's `k` nearest sender-layer cells within `cap` (spatial hash), weights them exp(-d / d0),
+#'   and sums R_i * w_ij * L_j per test, plus the sampling-variance sums of the first `nvar` shifts.
+#' @param x,y cell coordinates (cells sorted by type). @param tcode cell type codes (1-based, sorted).
+#' @param off 0-based offset of each type's first cell. @param lb,lv per sender type: dense ligand values and
+#'   their variances (cells x entities; empty matrix if unused). @param rb,rv the same for receptors per receiver type.
+#' @param ta,tb sender and receiver type of each test. @param tlc,trc ligand and receptor column of each test in
+#'   the type's block. @param shifts shifts x 2 matrix (microns; first row the observed layout).
+#' @param k neighbours. @param d0 distance scale of the weights. @param cap maximum neighbour distance.
+#' @param bx bounding box (xmin, width, ymin, height) for the toroidal wrap. @param nvar shifts with variance sums.
+#' @param threads threads (1: calling thread, 0: all cores).
+#' @return list(S = tests x shifts scores, Vs = tests x nvar variance sums).
 #' @keywords internal
+#' @export
 rs_contact_scores <- function(x, y, tcode, off, lb, lv, rb, rv, ta, tb, tlc, trc, shifts, k, d0, cap, bx, nvar, threads) .Call(wrap__rs_contact_scores, x, y, tcode, off, lb, lv, rb, rv, ta, tb, tlc, trc, shifts, k, d0, cap, bx, nvar, threads)
 
-#' Internal: grid gather-and-sum over shifts for one (sender chunk, receiver type) block.
+#' Grid-scale scores of lrmap over all toroidal shifts
+#' @description Internal kernel of lrmap. Reads blurred ligand fields at the (shifted) bins of receiver cells and
+#'   sums R_i * X_i per test, with receptor-side variance sums for the first `nvar` shifts.
+#' @param fq bins x ligands matrix of blurred ligand shares. @param gx,gy receiver bins (0-based).
+#' @param sx,sy shifts in bins. @param nx,ny grid size. @param rm,vr receivers x tests receptor values and
+#'   variances. @param lp column of `fq` for each test (1-based). @param nv valid receivers per shift (score
+#'   denominator). @param nvar shifts with variance sums. @param threads threads (1: calling thread, 0: all cores).
+#' @return list(S = tests x shifts scores, Vs = tests x nvar variance sums).
 #' @keywords internal
+#' @export
 rs_grid_gather <- function(fq, gx, gy, sx, sy, nx, ny, rm, vr, lp, nv, nvar, threads) .Call(wrap__rs_grid_gather, fq, gx, gy, sx, sy, nx, ny, rm, vr, lp, nv, nvar, threads)
 
-#' Internal: separable blur of m grids (columns of an (nx * ny) x m matrix) with a symmetric kernel.
+#' Separable Gaussian blur of several grids
+#' @description Internal kernel of lrmap: blurs each column (an nx x ny grid, column-major) with a symmetric kernel
+#'   along x and then y, zero padded.
+#' @param v (nx * ny) x m matrix. @param nx,ny grid size. @param ker kernel weights (odd length, symmetric).
+#' @param threads threads (1: calling thread, 0: all cores).
+#' @return matrix of the same shape.
 #' @keywords internal
+#' @export
 rs_blur <- function(v, nx, ny, ker, threads) .Call(wrap__rs_blur, v, nx, ny, ker, threads)
 
 # nolint end
