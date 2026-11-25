@@ -1,0 +1,17 @@
+Package: lrmaprs
+Title: Rust Backend for lrmap
+Version: 0.1.0
+Authors@R:
+    person("Ruben", "Dries", , "rdries@bu.edu", role = c("aut", "cre"))
+Description: Compiled kernels for the lrmap package: the per-shift loops of the toroidal-shift null
+    (contact neighbours through a spatial hash with per-test sums, grid gather-and-sum) and a separable
+    Gaussian blur, optionally multi-threaded.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Config/rextendr/version: 0.5.0
+SystemRequirements: Cargo (Rust's package manager), rustc >= 1.65.0, xz
+Depends: R (>= 4.2)
+Suggests: lrmap, testthat (>= 3.0.0)
+Config/testthat/edition: 3
+RoxygenNote: 7.3.3

@@ -1,0 +1,2 @@
+useDynLib(lrmaprs, .registration = TRUE)
+export(rs_contact_scores, rs_grid_gather, rs_blur)
